@@ -16,8 +16,10 @@ public class ProductResponseDto {
     private String productBrand;
     private Category category;
 
+
     public ProductResponseDto() {
     }
+
 
     public ProductResponseDto(String productId, String productName, String productDescription, String productImageUrl, String productBrand, Category category) {
         this.productId = productId;

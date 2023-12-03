@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.alok.projectservice.dto.CategoryDto;
 import org.alok.projectservice.dto.ProductDto;
 import org.alok.projectservice.entity.Category;
+import org.alok.projectservice.exception.EntityNotFoundException;
 import org.alok.projectservice.repository.CategoryRepository;
 import org.alok.projectservice.services.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,11 +29,11 @@ public class CategoryServiceImpl  implements CategoryService {
     }
 
     @Override
-    public Optional<Category> getCategoryById(String categoryId) {
-        categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found with id: " + categoryId));
+    public Category getCategoryById(String categoryId) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + categoryId));
         log.debug("Inside get category by id");
-        return categoryRepository.findById(categoryId);
+        return category;
     }
 
     @Override
@@ -44,7 +45,7 @@ public class CategoryServiceImpl  implements CategoryService {
     @Override
     public Category updateCategory(String categoryId, Category category) {
         categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found with id: " + categoryId));
+                .orElseThrow(() -> new EntityNotFoundException( "Product not found with id: " + categoryId));
         log.debug("Inside update category");
         return categoryRepository.save(category);
     }
@@ -52,7 +53,7 @@ public class CategoryServiceImpl  implements CategoryService {
     @Override
     public void deleteCategory(String categoryId) {
         categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found with id: " + categoryId));
+                .orElseThrow(() -> new EntityNotFoundException( "Product not found with id: " + categoryId));
         log.debug("Inside delete category");
         categoryRepository.deleteById(categoryId);
     }

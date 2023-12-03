@@ -14,7 +14,7 @@ public interface CategoryService {
 
     Category addCategory(Category category);
 
-    Optional<Category> getCategoryById(String categoryId);
+    Category getCategoryById(String categoryId);
 
     Iterable<Category> getAllCategory();
 

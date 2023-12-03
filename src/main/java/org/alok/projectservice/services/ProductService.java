@@ -13,17 +13,17 @@ import java.util.Optional;
 @Service
 public interface ProductService {
 
-    ProductResponseDto addProduct(Product product);
+    ProductResponseDto addProduct(ProductDto productDto);
 
-    Optional<Product> getProductById(String productId);
+    ProductResponseDto getProductById(String productId);
 
-    Iterable<Product> getAllProduct();
+    List<ProductResponseDto> getAllProduct();
 
-    Product updateProduct(String productId, Product product);
+    ProductResponseDto updateProduct(String productId, ProductDto productDto);
 
     void deleteProduct(String productId);
 
-    public Iterable<Category> getAllCategoriesWithProducts();
+    List<Category> getAllCategoriesWithProducts();
 
 
 }

@@ -3,11 +3,9 @@ package org.alok.projectservice.controller;
 import org.alok.projectservice.dto.ProductDto;
 import org.alok.projectservice.dto.ProductResponseDto;
 import org.alok.projectservice.entity.Category;
-import org.alok.projectservice.entity.Product;
-import org.alok.projectservice.services.CategoryService;
+import org.alok.projectservice.exception.EntityNotFoundException;
 import org.alok.projectservice.services.ProductService;
 import org.alok.projectservice.utils.ApiResponse;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,99 +21,77 @@ public class ProductController {
     @Autowired
     ProductService productService;
 
-    @Autowired
-    CategoryService categoryService;
+//    @Autowired
+//    CategoryService categoryService;
 
     @PostMapping("/add-product")
-    ResponseEntity<ApiResponse<ProductResponseDto>> addProduct(@RequestBody ProductDto productDto){
+    public ResponseEntity<ProductResponseDto> addProduct(@RequestBody ProductDto productDto) {
         try {
-            if (productDto == null) {
-                throw new IllegalArgumentException("ProductDto cannot be null");
-            }
-
-            String categoryName = productDto.getCategoryName();
-            Category category = categoryService.getCategoryById(categoryName)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found with name: " + categoryName));
-
-            Product product = new Product();
-            BeanUtils.copyProperties(productDto, product);
-            category.getProductList().add(product);
-            product.setCategory(category);
-            ProductResponseDto addedProduct = productService.addProduct(product);
-
-            return ResponseEntity.ok(new ApiResponse<>(addedProduct));
-
+            ProductResponseDto addedProduct = productService.addProduct(productDto);
+            return ResponseEntity.ok(addedProduct);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(new ApiResponse<>("INVALID_INPUT", "Invalid input: " + e.getMessage()));
-        } catch (ResponseStatusException e) {
-            return ResponseEntity.status(e.getStatus())
-                    .body(new ApiResponse<>("NOT_FOUND", "Category not found: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>("INTERNAL_ERROR", "An error occurred while adding the product"));
+                    .body(null);
         }
-
     }
 
+
     @GetMapping("/get-product-by-id/{productId}")
-    public ResponseEntity<ApiResponse<Product>> getProductById(String productId){
+    public ResponseEntity<ProductResponseDto> getProductById(String productId) {
         try {
             if (productId == null) {
                 throw new IllegalArgumentException("ProductId cannot be null");
             }
 
-            Optional<Product> product = productService.getProductById(productId);
-
-            return ResponseEntity.ok(new ApiResponse<>(product.get()));
+            return ResponseEntity.ok(productService.getProductById(productId));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(new ApiResponse<>("INVALID_INPUT", "Invalid input: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>("INTERNAL_ERROR", "An error occurred while fetching the category"));
+                    .body(null);
         }
     }
 
     @GetMapping("/get-all-product")
-    ResponseEntity<ApiResponse<List<ProductResponseDto>>> getAllProduct(){
+    ResponseEntity<List<ProductResponseDto>> getAllProduct() {
         try {
 
-            Iterable<Product> productList = productService.getAllProduct();
-            List<ProductResponseDto> productResponseDtoList = new ArrayList<>();
-            for(Product product: productList){
-                ProductResponseDto productResponseDto = new ProductResponseDto();
-                BeanUtils.copyProperties(product, productResponseDto);
-                productResponseDtoList.add(productResponseDto);
-            }
-            return ResponseEntity.ok(new ApiResponse<>(productResponseDtoList));
+            return ResponseEntity.ok(productService.getAllProduct());
 
-        }catch (Exception e) {
+        }catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>("INTERNAL_ERROR", "An error occurred while fetching the category"));
+                    .body(null);
         }
     }
 
 
     @PutMapping("/update-product/{productId}")
-    ResponseEntity<ApiResponse<Product>> updateProduct(@PathVariable String productId, @RequestBody Product product){
+    ResponseEntity<ProductResponseDto> updateProduct(@PathVariable String productId, @RequestBody ProductDto productDto) {
         try {
-            if (productId == null && product == null) {
+            if (productId == null && productDto == null) {
                 throw new IllegalArgumentException("ProductId or Product cannot be null");
             }
-
-            Optional<Product> productOptional = productService.getProductById(productId);
-            Product productSaved = productService.updateProduct(productId, product);
-
-            return ResponseEntity.ok(new ApiResponse<>(productSaved));
+            return ResponseEntity.ok(productService.updateProduct(productId, productDto));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(new ApiResponse<>("INVALID_INPUT", "Invalid input: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(null);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>("INTERNAL_ERROR", "An error occurred while fetching the category"));
+                    .body(null);
         }
     }
 
     @DeleteMapping("/delete-product/{productId}")
-    ResponseEntity<ApiResponse< Map<String, Boolean>>> deleteProduct(@PathVariable String productId){
+    ResponseEntity<Map<String, Boolean>> deleteProduct(@PathVariable String productId) {
         try {
             if (productId == null) {
                 throw new IllegalArgumentException("ProductId cannot be null");
@@ -123,28 +99,30 @@ public class ProductController {
 
             productService.deleteProduct(productId);
             Map<String, Boolean> map = new HashMap<>();
-            map.put("Deleted",Boolean.TRUE);
+            map.put("Deleted", Boolean.TRUE);
 
-            return ResponseEntity.ok(new ApiResponse<>(map));
+            return ResponseEntity.ok(map);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(new ApiResponse<>("INVALID_INPUT", "Invalid input: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(null);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>("INTERNAL_ERROR", "An error occurred while fetching the category"));
+                    .body(null);
         }
     }
 
 
     @GetMapping("/get-all-categories-with-products")
-    ResponseEntity<ApiResponse<Iterable<Category>>> getAllCategoriesWithProducts(){
+    ResponseEntity<List<Category>> getAllCategoriesWithProducts() {
         try {
 
-            Iterable<Category> categoryList = productService.getAllCategoriesWithProducts();
-            return ResponseEntity.ok(new ApiResponse<>(categoryList));
+            List<Category> categoryList = productService.getAllCategoriesWithProducts();
+            return ResponseEntity.ok(categoryList);
 
-        }catch (Exception e) {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>("INTERNAL_ERROR", "An error occurred while fetching the category"));
+                    .body(null);
         }
     }
 }

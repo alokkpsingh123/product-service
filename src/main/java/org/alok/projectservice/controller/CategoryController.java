@@ -2,7 +2,9 @@ package org.alok.projectservice.controller;
 
 
 import org.alok.projectservice.dto.CategoryDto;
+import org.alok.projectservice.dto.CategoryResponseDto;
 import org.alok.projectservice.entity.Category;
+import org.alok.projectservice.exception.EntityNotFoundException;
 import org.alok.projectservice.services.CategoryService;
 import org.alok.projectservice.utils.ApiResponse;
 import org.springframework.beans.BeanUtils;
@@ -12,9 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("/category")
@@ -24,7 +24,8 @@ public class CategoryController {
     CategoryService categoryService;
 
     @PostMapping("/add-category")
-    ResponseEntity<ApiResponse<Category>> addCategory(@RequestBody CategoryDto categoryDto) {
+    ResponseEntity<CategoryResponseDto> addCategory(@RequestBody CategoryDto categoryDto) {
+
 
         try {
             if (categoryDto == null) {
@@ -34,75 +35,94 @@ public class CategoryController {
             Category category = new Category();
             BeanUtils.copyProperties(categoryDto, category);
             Category addedCategory = categoryService.addCategory(category);
-
-            return ResponseEntity.ok(new ApiResponse<>(addedCategory));
+            CategoryResponseDto categoryResponseDto = new CategoryResponseDto();
+            BeanUtils.copyProperties(addedCategory, categoryResponseDto);
+            return ResponseEntity.ok(categoryResponseDto);
 
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(new ApiResponse<>("INVALID_INPUT", "Invalid input: "
-                    + e.getMessage()));
+            return ResponseEntity.badRequest().body(null);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>("INTERNAL_ERROR", "An error occurred while adding the category"));
+                    .body(null);
         }
     }
 
     @GetMapping("/get-category-by-id/{categoryId}")
-    public ResponseEntity<ApiResponse<Category>> getCategoryById(@PathVariable String categoryId) {
+    public ResponseEntity<CategoryResponseDto> getCategoryById(@PathVariable String categoryId) {
 
         try {
             if (categoryId == null) {
                 throw new IllegalArgumentException("CategoryId cannot be null");
             }
 
-            Optional<Category> category = categoryService.getCategoryById(categoryId);
+            Category category = categoryService.getCategoryById(categoryId);
+            CategoryResponseDto categoryResponseDto = new CategoryResponseDto();
+            BeanUtils.copyProperties(category, categoryResponseDto);
 
-            return ResponseEntity.ok(new ApiResponse<>(category.get()));
+            return ResponseEntity.ok(categoryResponseDto);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(new ApiResponse<>("INVALID_INPUT", "Invalid input: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(null);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>("INTERNAL_ERROR", "An error occurred while fetching the category"));
+                    .body(null);
         }
     }
 
 
     @GetMapping("/get-all-category")
-    ResponseEntity<ApiResponse<Iterable<Category>>> getAllCategory() {
+    ResponseEntity<List<CategoryResponseDto>> getAllCategory() {
 
         try {
 
             Iterable<Category> categoryList = categoryService.getAllCategory();
-            return ResponseEntity.ok(new ApiResponse<>(categoryList));
+            List<CategoryResponseDto> categoryResponseDtoList = new ArrayList<>();
 
-        }catch (Exception e) {
+            for ( Category category : categoryList){
+                CategoryResponseDto categoryResponseDto = new CategoryResponseDto();
+                BeanUtils.copyProperties(category, categoryResponseDto);
+                categoryResponseDtoList.add(categoryResponseDto);
+            }
+
+
+            return ResponseEntity.ok(categoryResponseDtoList);
+
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>("INTERNAL_ERROR", "An error occurred while fetching the category"));
+                    .body(null);
         }
 
     }
 
     @PutMapping("/update-category/{categoryId}")
-    ResponseEntity<ApiResponse<Category>> updateCategory(@PathVariable String categoryId, @RequestBody Category category) {
+    ResponseEntity<CategoryResponseDto> updateCategory(@PathVariable String categoryId, @RequestBody Category category) {
         try {
             if (categoryId == null && category == null) {
                 throw new IllegalArgumentException("CategoryId or Category cannot be null");
             }
+            Category categorySaved = categoryService.updateCategory(categoryId, category);
+            CategoryResponseDto categoryResponseDto = new CategoryResponseDto();
+            BeanUtils.copyProperties(categorySaved, categoryResponseDto);
 
-            Optional<Category> categoryOptional = categoryService.getCategoryById(categoryId);
-            Category categorySaved = categoryService.updateCategory(categoryId,category);
-
-            return ResponseEntity.ok(new ApiResponse<>(categorySaved));
+            return ResponseEntity.ok(categoryResponseDto);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(new ApiResponse<>("INVALID_INPUT", "Invalid input: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(null);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>("INTERNAL_ERROR", "An error occurred while fetching the category"));
+                    .body(null);
         }
 
     }
 
     @DeleteMapping("/delete-category/{categoryId}")
-    ResponseEntity<ApiResponse< Map<String, Boolean>>> deleteCategory(@PathVariable String categoryId) {
+    ResponseEntity<Map<String, Boolean>> deleteCategory(@PathVariable String categoryId) {
         try {
             if (categoryId == null) {
                 throw new IllegalArgumentException("CategoryId cannot be null");
@@ -111,14 +131,16 @@ public class CategoryController {
             categoryService.deleteCategory(categoryId);
 
             Map<String, Boolean> map = new HashMap<>();
-            map.put("Deleted",Boolean.TRUE);
+            map.put("Deleted", Boolean.TRUE);
 
-            return ResponseEntity.ok(new ApiResponse<>(map));
+            return ResponseEntity.ok(map);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(new ApiResponse<>("INVALID_INPUT", "Invalid input: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(null);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>("INTERNAL_ERROR", "An error occurred while fetching the category"));
+                    .body(null);
         }
     }
 }

@@ -3,6 +3,7 @@ package org.alok.projectservice.entity;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.minidev.json.annotate.JsonIgnore;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
@@ -25,6 +26,8 @@ public class Product {
     private String productImageUrl;
     private String productBrand;
 
+
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_name_fk", nullable = false)
     private Category category;

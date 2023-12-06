@@ -16,6 +16,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/product")
+@CrossOrigin
 public class ProductController {
 
     @Autowired
@@ -41,7 +42,7 @@ public class ProductController {
 
 
     @GetMapping("/get-product-by-id/{productId}")
-    public ResponseEntity<ProductResponseDto> getProductById(String productId) {
+    public ResponseEntity<ProductResponseDto> getProductById(@PathVariable String productId) {
         try {
             if (productId == null) {
                 throw new IllegalArgumentException("ProductId cannot be null");
@@ -123,6 +124,23 @@ public class ProductController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(null);
+        }
+    }
+
+    @GetMapping("/filter-products/{input}")
+    public ResponseEntity<List<ProductResponseDto>> filterProducts(@PathVariable String input) {
+        try {
+            if (input == null || input.trim().isEmpty()) {
+                throw new IllegalArgumentException("Input cannot be null or empty");
+            }
+
+            List<ProductResponseDto> filteredProducts = productService.filterProducts(input);
+            return ResponseEntity.ok(filteredProducts);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 }

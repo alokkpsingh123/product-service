@@ -20,6 +20,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -30,6 +32,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     CategoryService categoryService;
+
+
 
     @Override
     public ProductResponseDto addProduct(ProductDto productDto) {
@@ -116,5 +120,22 @@ public class ProductServiceImpl implements ProductService {
 
         log.debug("Inside get all categories with products");
         return categoryList;
+    }
+
+    @Override
+    public List<ProductResponseDto> filterProducts(String input) {
+        List<ProductResponseDto> allProducts = getAllProduct();
+
+        Pattern pattern = Pattern.compile(Pattern.quote(input), Pattern.CASE_INSENSITIVE);
+
+        List<ProductResponseDto> filteredProducts = allProducts.stream()
+                .filter(product ->
+                        pattern.matcher(product.getProductName()).find() ||
+                                pattern.matcher(product.getProductDescription()).find() ||
+                                pattern.matcher(product.getProductBrand()).find()
+                )
+                .collect(Collectors.toList());
+
+        return filteredProducts;
     }
 }

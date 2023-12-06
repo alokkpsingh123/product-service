@@ -25,5 +25,7 @@ public interface ProductService {
 
     List<Category> getAllCategoriesWithProducts();
 
+    List<ProductResponseDto> filterProducts(String input);
+
 
 }

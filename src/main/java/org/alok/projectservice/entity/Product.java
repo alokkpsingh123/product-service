@@ -25,6 +25,7 @@ public class Product {
     private String productDescription;
     private String productImageUrl;
     private String productBrand;
+    private String productPrice;
 
 
     @com.fasterxml.jackson.annotation.JsonIgnore
